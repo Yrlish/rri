@@ -118,15 +118,12 @@ export class BonusPool extends Pool {
 	}
 }
 
-export class SandboxBonusPool extends Pool {
-	constructor() {
-		super("Special Routes");
-		this.node.classList.add("bonus");
+export class SandboxBonusPool extends BonusPool {
+	_used = 0;
+	_locked = false;
 
-		["cross-road-road-rail-road", "cross-road-rail-rail-rail", "cross-road",
-		 "cross-rail", "cross-road-rail-rail-road", "cross-road-rail-road-rail"].forEach(sid => {
-			this.add(new HTMLDice("plain", sid));
-		});
+	constructor() {
+		super();
 	}
 
 	handleEvent(e: Event) {
@@ -153,6 +150,7 @@ export class SandboxBonusPool extends Pool {
 	}
 
 	fromJSON(indices: number[]) {
+		this._locked = false;
 		indices.forEach(i => this.disable(this._dices[i]));
 	}
 }

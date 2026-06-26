@@ -18,10 +18,19 @@ export default class Board {
 	node: HTMLElement | null;
 	blob: Blob | null = null;
 	_cells = new CellRepo();
+	_sandboxMode = false;
 
 	constructor(readonly _tileCtor = Tile) {
 		this.node = this._build();
 		this._placeInitialTiles();
+	}
+
+	enableSandboxMode() {
+		this._sandboxMode = true;
+	}
+
+	disableSandboxMode() {
+		this._sandboxMode = false;
 	}
 
 	_build(): HTMLElement | null { return null; };
@@ -69,7 +78,7 @@ export default class Board {
 		let tile = this._cells.at(x, y).tile;
 		if (!tile) { return; }
 
-		let avail = this._getTransforms(tile, x, y);
+		let avail = this._sandboxMode ? tile.getTransforms() : this._getTransforms(tile, x, y);
 		let index = avail.indexOf(tile.transform);
 		if (index == -1 || avail.length <= 1) { return; }
 

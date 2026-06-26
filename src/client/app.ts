@@ -28,6 +28,13 @@ function goIntro() {
 }
 
 async function goGame(type: GameType | "multi" | "sandbox") {
+	// Enable sandbox mode on the board if starting a sandbox game
+	if (type == "sandbox") {
+		board.enableSandboxMode();
+	} else {
+		board.disableSandboxMode();
+	}
+	
 	const game = (type == "multi" ? new MultiGame(board) : 
 	              type == "sandbox" ? new SandboxGame(board) : 
 	              new SingleGame(board, type));

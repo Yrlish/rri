@@ -930,8 +930,15 @@ class Board {
         this._tileCtor = _tileCtor;
         this.blob = null;
         this._cells = new CellRepo();
+        this._sandboxMode = false;
         this.node = this._build();
         this._placeInitialTiles();
+    }
+    enableSandboxMode() {
+        this._sandboxMode = true;
+    }
+    disableSandboxMode() {
+        this._sandboxMode = false;
     }
     _build() { return null; }
     ;
@@ -978,7 +985,7 @@ class Board {
         if (!tile) {
             return;
         }
-        let avail = this._getTransforms(tile, x, y);
+        let avail = this._sandboxMode ? tile.getTransforms() : this._getTransforms(tile, x, y);
         let index = avail.indexOf(tile.transform);
         if (index == -1 || avail.length <= 1) {
             return;
@@ -2114,15 +2121,11 @@ class BonusPool extends Pool {
         indices.forEach(i => this.disable(this._dices[i]));
     }
 }
-
-class SandboxBonusPool extends Pool {
+class SandboxBonusPool extends BonusPool {
     constructor() {
-        super("Special Routes");
-        this.node.classList.add("bonus");
-        ["cross-road-road-rail-road", "cross-road-rail-rail-rail", "cross-road",
-            "cross-rail", "cross-road-rail-rail-road", "cross-road-rail-road-rail"].forEach(sid => {
-            this.add(new HTMLDice("plain", sid));
-        });
+        super();
+        this._used = 0;
+        this._locked = false;
     }
     handleEvent(e) {
         // In sandbox mode, allow unlimited usage of special pieces
@@ -2143,10 +2146,10 @@ class SandboxBonusPool extends Pool {
         return this._dices.filter(d => d.disabled).map(d => this._dices.indexOf(d));
     }
     fromJSON(indices) {
+        this._locked = false;
         indices.forEach(i => this.disable(this._dices[i]));
     }
 }
-
 
 const dataset$1 = document.body.dataset;
 class Game {
@@ -2608,14 +2611,13 @@ class SandboxRound {
             return;
         }
         // Replace unplaced mandatory dice in-place
-        unplacedMandatory.forEach((dice, index) => {
+        unplacedMandatory.forEach((dice) => {
             // Create new random die
             const DICE_REGULAR_1 = ["road-i", "rail-i", "road-l", "rail-l", "road-t", "rail-t"];
             const DICE_REGULAR_2 = ["bridge", "bridge", "rail-road-i", "rail-road-i", "rail-road-l", "rail-road-l"];
             const allRegular = [...DICE_REGULAR_1, ...DICE_REGULAR_2];
             const randomSid = allRegular[Math.floor(Math.random() * allRegular.length)];
             const newDice = new HTMLDice("plain", randomSid);
-            
             // Replace the old die with the new one in-place
             const oldIndex = this._pool._dices.indexOf(dice);
             if (oldIndex > -1) {
@@ -3070,6 +3072,13 @@ function goIntro() {
     showBoard(board);
 }
 async function goGame(type) {
+    // Enable sandbox mode on the board if starting a sandbox game
+    if (type == "sandbox") {
+        board.enableSandboxMode();
+    }
+    else {
+        board.disableSandboxMode();
+    }
     const game = (type == "multi" ? new MultiGame(board) :
         type == "sandbox" ? new SandboxGame(board) :
             new SingleGame(board, type));

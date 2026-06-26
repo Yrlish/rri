@@ -3,9 +3,8 @@ import { Cell } from "../cell-repo.js";
 
 import Pool, { BonusPool } from "./pool.js";
 import * as html from "./html.js";
-import { DBLCLICK } from "./conf.js";
+import { DBLCLICK, DOWN_EVENT } from "./conf.js";
 import HTMLDice from "./html-dice.js";
-import { createDice } from "../rules.js";
 
 
 export default class SandboxRound {
@@ -184,7 +183,7 @@ export default class SandboxRound {
 		}
 
 		// Replace unplaced mandatory dice in-place
-		unplacedMandatory.forEach((dice, index) => {
+		unplacedMandatory.forEach((dice) => {
 			// Create new random die
 			const DICE_REGULAR_1 = ["road-i", "rail-i", "road-l", "rail-l", "road-t", "rail-t"];
 			const DICE_REGULAR_2 = ["bridge", "bridge", "rail-road-i", "rail-road-i", "rail-road-l", "rail-road-l"];
