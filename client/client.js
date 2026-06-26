@@ -2124,23 +2124,32 @@ class BonusPool extends Pool {
 class SandboxBonusPool extends BonusPool {
     constructor() {
         super();
-        this._used = 0;
-        this._locked = false;
-    }
-    handleEvent(e) {
-        // In sandbox mode, allow unlimited usage of special pieces
-        super.handleEvent(e);
+        // Override the handleEvent to not check limits
+        this.handleEvent = (e) => {
+            // In sandbox mode, allow unlimited usage of special pieces
+            super.handleEvent(e);
+        };
     }
     disable(dice) {
-        // In sandbox mode, don't track usage - allow unlimited
-        return super.disable(dice);
+        // In sandbox mode, don't track usage - just disable the die
+        // Don't call parent's disable which tracks _used and _locked
+        if (!this._dices.includes(dice)) {
+            return false;
+        }
+        dice.disabled = true;
+        return true;
     }
     enable(dice) {
-        // In sandbox mode, don't track usage - allow unlimited
-        return super.enable(dice);
+        // In sandbox mode, don't track usage - just enable the die
+        // Don't call parent's enable which tracks _used and _locked
+        if (!this._dices.includes(dice)) {
+            return false;
+        }
+        dice.disabled = false;
+        return true;
     }
     unlock() {
-        // In sandbox mode, always unlocked
+        // In sandbox mode, always unlocked - no-op
     }
     toJSON() {
         return this._dices.filter(d => d.disabled).map(d => this._dices.indexOf(d));
@@ -2640,21 +2649,40 @@ class SandboxGame extends Game {
     constructor(_board) {
         super(_board);
         this._bonusPool = new SandboxBonusPool();
+        this._endGameButton = node("button");
+        this._shouldEndGame = false;
     }
     async play() {
         super.play();
         this._node.innerHTML = "";
         this._node.appendChild(this._bonusPool.node);
+        // Add end game button below the board
+        this._endGameButton.textContent = "End Game";
+        this._endGameButton.style.marginTop = "10px";
+        this._endGameButton.style.display = "block";
+        this._endGameButton.style.marginLeft = "auto";
+        this._endGameButton.style.marginRight = "auto";
+        // Add event listener to end game button
+        this._endGameButton.addEventListener("click", () => {
+            this._shouldEndGame = true;
+        });
+        // Insert the end game button after the bonus pool
+        this._node.appendChild(this._endGameButton);
         let num = 1;
         // Sandbox mode runs for a large number of rounds (effectively unlimited)
-        while (num <= ROUNDS["sandbox"]) {
+        while (num <= ROUNDS["sandbox"] && !this._shouldEndGame) {
             let round = new SandboxRound(num, this._board, this._bonusPool);
-            this._node.appendChild(round.node);
+            this._node.insertBefore(round.node, this._endGameButton);
             let dice = createDice(HTMLDice, "sandbox", num);
             await round.play(dice);
             round.node.remove();
+            // Check if board is full after each round
+            if (this._isBoardFull()) {
+                break;
+            }
             num++;
         }
+        this._endGameButton.remove();
         this._outro();
         return true;
     }
@@ -2665,6 +2693,18 @@ class SandboxGame extends Game {
         const parent = document.querySelector("#score");
         parent.innerHTML = "";
         parent.appendChild(renderSingle(s));
+    }
+    _isBoardFull() {
+        // Check if all non-border cells have tiles
+        // Use the filter method of CellRepo to get all non-border cells
+        const nonBorderCells = this._board._cells.filter((cell) => !cell.border);
+        for (let cell of nonBorderCells) {
+            // If a non-border cell doesn't have a tile, board is not full
+            if (!cell.tile) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 

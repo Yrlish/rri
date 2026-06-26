@@ -119,30 +119,33 @@ export class BonusPool extends Pool {
 }
 
 export class SandboxBonusPool extends BonusPool {
-	_used = 0;
-	_locked = false;
-
 	constructor() {
 		super();
-	}
-
-	handleEvent(e: Event) {
-		// In sandbox mode, allow unlimited usage of special pieces
-		super.handleEvent(e);
+		// Override the handleEvent to not check limits
+		this.handleEvent = (e: Event) => {
+			// In sandbox mode, allow unlimited usage of special pieces
+			super.handleEvent(e);
+		};
 	}
 
 	disable(dice: HTMLDice) {
-		// In sandbox mode, don't track usage - allow unlimited
-		return super.disable(dice);
+		// In sandbox mode, don't track usage - just disable the die
+		// Don't call parent's disable which tracks _used and _locked
+		if (!this._dices.includes(dice)) { return false; }
+		dice.disabled = true;
+		return true;
 	}
 
 	enable(dice: HTMLDice) {
-		// In sandbox mode, don't track usage - allow unlimited
-		return super.enable(dice);
+		// In sandbox mode, don't track usage - just enable the die
+		// Don't call parent's enable which tracks _used and _locked
+		if (!this._dices.includes(dice)) { return false; }
+		dice.disabled = false;
+		return true;
 	}
 
 	unlock() {
-		// In sandbox mode, always unlocked
+		// In sandbox mode, always unlocked - no-op
 	}
 
 	toJSON() {
