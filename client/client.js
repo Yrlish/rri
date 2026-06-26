@@ -2572,8 +2572,12 @@ class SandboxRound {
         this._board.signal([]);
         this._pool.pending(null);
         this._bonusPool.pending(null);
-        this._pool.disable(this._pending);
-        this._bonusPool.disable(this._pending);
+        // Only disable regular dice, not special pieces from bonus pool
+        // Special pieces should remain visually enabled for unlimited use
+        if (this._pool._dices.includes(this._pending)) {
+            this._pool.disable(this._pending);
+        }
+        // Don't disable special pieces from bonus pool
         this._placedDice.set(cell, this._pending);
         this._pending = null;
         this._syncEnd();
@@ -2592,6 +2596,9 @@ class SandboxRound {
         this._pool.syncSandbox(this._board);
         let remainingMandatory = this._getRemainingMandatoryCount();
         this._endButton.disabled = (remainingMandatory > 0);
+        // Disable reroll button when all mandatory dice are placed
+        let unplacedMandatory = this._pool._dices.filter(d => d.mandatory && !d.disabled);
+        this._rerollButton.disabled = (unplacedMandatory.length === 0);
     }
     _getRemainingMandatoryCount() {
         // Count how many mandatory dice are still in the pool (not placed)
@@ -2625,7 +2632,7 @@ class SandboxRound {
             return dice.mandatory && !dice.disabled && !dice.blocked;
         });
         if (unplacedMandatory.length === 0) {
-            alert("All mandatory dice have been placed!");
+            // Button is disabled, so this shouldn't be reached
             return;
         }
         // Replace unplaced mandatory dice in-place
