@@ -1,5 +1,6 @@
 import Board from "../board.js";
 import { Cell } from "../cell-repo.js";
+import Tile from "../tile.js";
 
 import Pool, { BonusPool } from "./pool.js";
 import * as html from "./html.js";
@@ -130,9 +131,20 @@ export default class SandboxRound {
 	}
 
 	_tryToCycle(cell: Cell) {
-		if (!this._placedDice.has(cell)) { return; }
+		// In sandbox mode, allow rotation of ANY tile on the board
+		if (!cell.tile) { return; }
 
-		this._board.cycleTransform(cell.x, cell.y);
+		// In sandbox mode, cycle through all transforms without checking neighbors
+		const tile = cell.tile as Tile;
+		const transforms = tile.getTransforms();
+		if (transforms.length <= 1) { return; }
+
+		let currentIndex = transforms.indexOf(tile.transform);
+		if (currentIndex === -1) { currentIndex = 0; }
+		const nextIndex = (currentIndex + 1) % transforms.length;
+		tile.transform = transforms[nextIndex];
+
+		this._board.signal([]);
 		this._syncEnd();
 	}
 
