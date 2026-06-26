@@ -15,7 +15,7 @@ export default class SandboxRound {
 	_rerollButton: HTMLButtonElement = html.node("button");
 	_placedDice = new Map<Cell, HTMLDice>();
 	_lastClickTs = 0;
-	_mandatoryCount = 4;
+	_mandatoryCount = 5;
 
 	constructor(readonly number: number, readonly _board: Board, readonly _bonusPool: BonusPool) {
 		this._pool = new Pool(`Round #${this.number} - Sandbox`);
@@ -42,7 +42,7 @@ export default class SandboxRound {
 			this._endButton.addEventListener("click", _ => {
 				let valid = this._validatePlacement();
 				if (!valid) {
-					alert("You must place all 4 mandatory dice before ending the round.");
+					alert("You must place all 5 mandatory dice before ending the round.");
 					return;
 				}
 				this._end();

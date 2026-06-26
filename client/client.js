@@ -1942,17 +1942,17 @@ function createDice(Ctor, type, round) {
                 return createDice(Ctor, "normal", round);
             }
         case "sandbox":
-            // Sandbox mode: return 4 random regular dice
+            // Sandbox mode: return 5 random regular dice
             let result = [];
-            let templates = [DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_2];
-            while (templates.length && result.length < 4) {
+            let templates = [DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_2, DICE_REGULAR_2];
+            while (templates.length && result.length < 5) {
                 let index = Math.floor(Math.random() * templates.length);
                 let template = templates.splice(index, 1)[0];
                 let sid = randomType(template);
                 result.push(new Ctor("plain", sid));
             }
-            // If we didn't get 4, fill with random from all regular dice
-            while (result.length < 4) {
+            // If we didn't get 5, fill with random from all regular dice
+            while (result.length < 5) {
                 let allRegular = [...DICE_REGULAR_1, ...DICE_REGULAR_2];
                 let sid = randomType(allRegular);
                 result.push(new Ctor("plain", sid));
@@ -2464,7 +2464,7 @@ class SandboxRound {
         this._rerollButton = node("button");
         this._placedDice = new Map();
         this._lastClickTs = 0;
-        this._mandatoryCount = 4;
+        this._mandatoryCount = 5;
         this._pool = new Pool(`Round #${this.number} - Sandbox`);
         this.node = this._pool.node;
         this._endButton.textContent = `End round #${this.number}`;
@@ -2484,7 +2484,7 @@ class SandboxRound {
             this._endButton.addEventListener("click", _ => {
                 let valid = this._validatePlacement();
                 if (!valid) {
-                    alert("You must place all 4 mandatory dice before ending the round.");
+                    alert("You must place all 5 mandatory dice before ending the round.");
                     return;
                 }
                 this._end();
@@ -2564,10 +2564,13 @@ class SandboxRound {
         this._syncEnd();
     }
     _tryToCycle(cell) {
-        if (!this._placedDice.has(cell)) {
+        // In sandbox mode, allow rotation of ANY tile on the board
+        // (not just pieces placed in the current round)
+        if (!cell.tile) {
             return;
         }
         this._board.cycleTransform(cell.x, cell.y);
+        this._board.signal([]);
         this._syncEnd();
     }
     _syncEnd() {
