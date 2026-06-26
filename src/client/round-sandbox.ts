@@ -1,6 +1,5 @@
 import Board from "../board.js";
 import { Cell } from "../cell-repo.js";
-import Tile from "../tile.js";
 
 import Pool, { BonusPool } from "./pool.js";
 import * as html from "./html.js";

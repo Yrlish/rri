@@ -72,15 +72,15 @@ export function createDice<T extends Dice>(Ctor: Type<T>, type: GameType, round:
 		break;
 
 		default:
-			let result = [];
-			let templates = [DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_2];
-			while (templates.length) {
-				let index = Math.floor(Math.random()*templates.length);
-				let template = templates.splice(index, 1)[0];
+			let resultDefault = [];
+			let templatesDefault = [DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_2];
+			while (templatesDefault.length) {
+				let index = Math.floor(Math.random()*templatesDefault.length);
+				let template = templatesDefault.splice(index, 1)[0];
 				let sid = randomType(template);
-				result.push(new Ctor("plain", sid));
+				resultDefault.push(new Ctor("plain", sid));
 			}
-			return result;
+			return resultDefault;
 		break;
 	}
 

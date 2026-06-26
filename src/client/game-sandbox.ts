@@ -1,4 +1,4 @@
-import { GameType, ROUNDS, createDice } from "../rules.js";
+import { ROUNDS, createDice } from "../rules.js";
 
 import HTMLDice from "./html-dice.js";
 import Game from "./game.js";

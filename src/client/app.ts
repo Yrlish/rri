@@ -36,7 +36,10 @@ async function goGame(type: GameType | "multi" | "sandbox") {
 }
 
 function onClick(name: string, cb: () => void | Promise<void>) {
-	(document.querySelector(`[name=${name}]`) as HTMLElement).addEventListener("click", cb);
+	const el = document.querySelector(`[name=${name}]`) as HTMLElement;
+	if (el) {
+		el.addEventListener("click", cb);
+	}
 }
 
 function init() {

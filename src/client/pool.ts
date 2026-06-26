@@ -59,7 +59,7 @@ export default class Pool {
 		});
 	}
 
-	syncSandbox(board: Board) {
+	syncSandbox(_board: Board) {
 		// In sandbox mode, never block dice - they can be placed anywhere
 		this._dices.filter(dice => !dice.disabled).forEach(dice => {
 			dice.blocked = false;
