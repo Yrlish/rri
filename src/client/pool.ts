@@ -14,7 +14,7 @@ export default class Pool {
 		let heading = html.node("h2", {className:"heading"});
 		heading.append(label);
 		this.node.append(heading);
-    }
+	}
 
 	get remaining() {
 		return this._dices.filter(d => d.mandatory && !d.disabled && !d.blocked);
@@ -114,6 +114,45 @@ export class BonusPool extends Pool {
 
 	fromJSON(indices: number[]) {
 		this._locked = false;
+		indices.forEach(i => this.disable(this._dices[i]));
+	}
+}
+
+export class SandboxBonusPool extends Pool {
+	constructor() {
+		super("Special Routes");
+		this.node.classList.add("bonus");
+
+		["cross-road-road-rail-road", "cross-road-rail-rail-rail", "cross-road",
+		 "cross-rail", "cross-road-rail-rail-road", "cross-road-rail-road-rail"].forEach(sid => {
+			this.add(new HTMLDice("plain", sid));
+		});
+	}
+
+	handleEvent(e: Event) {
+		// In sandbox mode, allow unlimited usage of special pieces
+		super.handleEvent(e);
+	}
+
+	disable(dice: HTMLDice) {
+		// In sandbox mode, don't track usage - allow unlimited
+		return super.disable(dice);
+	}
+
+	enable(dice: HTMLDice) {
+		// In sandbox mode, don't track usage - allow unlimited
+		return super.enable(dice);
+	}
+
+	unlock() {
+		// In sandbox mode, always unlocked
+	}
+
+	toJSON() {
+		return this._dices.filter(d => d.disabled).map(d => this._dices.indexOf(d));
+	}
+
+	fromJSON(indices: number[]) {
 		indices.forEach(i => this.disable(this._dices[i]));
 	}
 }

@@ -1935,17 +1935,17 @@ function createDice(Ctor, type, round) {
                 return createDice(Ctor, "normal", round);
             }
         case "sandbox":
-            // Sandbox mode: return 5 random regular dice
+            // Sandbox mode: return 4 random regular dice
             let result = [];
             let templates = [DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_2];
-            while (templates.length && result.length < 5) {
+            while (templates.length && result.length < 4) {
                 let index = Math.floor(Math.random() * templates.length);
                 let template = templates.splice(index, 1)[0];
                 let sid = randomType(template);
                 result.push(new Ctor("plain", sid));
             }
-            // If we didn't get 5, fill with random from all regular dice
-            while (result.length < 5) {
+            // If we didn't get 4, fill with random from all regular dice
+            while (result.length < 4) {
                 let allRegular = [...DICE_REGULAR_1, ...DICE_REGULAR_2];
                 let sid = randomType(allRegular);
                 result.push(new Ctor("plain", sid));
@@ -2114,6 +2114,39 @@ class BonusPool extends Pool {
         indices.forEach(i => this.disable(this._dices[i]));
     }
 }
+
+class SandboxBonusPool extends Pool {
+    constructor() {
+        super("Special Routes");
+        this.node.classList.add("bonus");
+        ["cross-road-road-rail-road", "cross-road-rail-rail-rail", "cross-road",
+            "cross-rail", "cross-road-rail-rail-road", "cross-road-rail-road-rail"].forEach(sid => {
+            this.add(new HTMLDice("plain", sid));
+        });
+    }
+    handleEvent(e) {
+        // In sandbox mode, allow unlimited usage of special pieces
+        super.handleEvent(e);
+    }
+    disable(dice) {
+        // In sandbox mode, don't track usage - allow unlimited
+        return super.disable(dice);
+    }
+    enable(dice) {
+        // In sandbox mode, don't track usage - allow unlimited
+        return super.enable(dice);
+    }
+    unlock() {
+        // In sandbox mode, always unlocked
+    }
+    toJSON() {
+        return this._dices.filter(d => d.disabled).map(d => this._dices.indexOf(d));
+    }
+    fromJSON(indices) {
+        indices.forEach(i => this.disable(this._dices[i]));
+    }
+}
+
 
 const dataset$1 = document.body.dataset;
 class Game {
@@ -2428,8 +2461,8 @@ class SandboxRound {
         this._rerollButton = node("button");
         this._placedDice = new Map();
         this._lastClickTs = 0;
-        this._mandatoryCount = 5;
-        this._pool = new Pool(`Round #${this.number} - Sandbox Mode`);
+        this._mandatoryCount = 4;
+        this._pool = new Pool(`Round #${this.number} - Sandbox`);
         this.node = this._pool.node;
         this._endButton.textContent = `End round #${this.number}`;
         this._rerollButton.textContent = "Reroll unplaced dice";
@@ -2448,7 +2481,7 @@ class SandboxRound {
             this._endButton.addEventListener("click", _ => {
                 let valid = this._validatePlacement();
                 if (!valid) {
-                    alert("You must place all 5 mandatory dice before ending the round.");
+                    alert("You must place all 4 mandatory dice before ending the round.");
                     return;
                 }
                 this._end();
@@ -2574,18 +2607,25 @@ class SandboxRound {
             alert("All mandatory dice have been placed!");
             return;
         }
-        // Remove old unplaced mandatory dice from pool
-        unplacedMandatory.forEach(dice => {
-            this._pool.node.removeChild(dice.node);
-            let index = this._pool._dices.indexOf(dice);
-            if (index > -1) {
-                this._pool._dices.splice(index, 1);
+        // Replace unplaced mandatory dice in-place
+        unplacedMandatory.forEach((dice, index) => {
+            // Create new random die
+            const DICE_REGULAR_1 = ["road-i", "rail-i", "road-l", "rail-l", "road-t", "rail-t"];
+            const DICE_REGULAR_2 = ["bridge", "bridge", "rail-road-i", "rail-road-i", "rail-road-l", "rail-road-l"];
+            const allRegular = [...DICE_REGULAR_1, ...DICE_REGULAR_2];
+            const randomSid = allRegular[Math.floor(Math.random() * allRegular.length)];
+            const newDice = new HTMLDice("plain", randomSid);
+            
+            // Replace the old die with the new one in-place
+            const oldIndex = this._pool._dices.indexOf(dice);
+            if (oldIndex > -1) {
+                this._pool._dices[oldIndex] = newDice;
+                // Replace the DOM node
+                dice.node.replaceWith(newDice.node);
+                // Add event listener to the new die
+                newDice.node.addEventListener(DOWN_EVENT, this._pool);
             }
         });
-        // Create new random dice
-        let newDice = createDice(HTMLDice, "sandbox", this.number);
-        // Add them to the pool
-        newDice.forEach(dice => this._pool.add(dice));
         // Update the pool display
         this._syncEnd();
     }
@@ -2594,6 +2634,7 @@ class SandboxRound {
 class SandboxGame extends Game {
     constructor(_board) {
         super(_board);
+        this._bonusPool = new SandboxBonusPool();
     }
     async play() {
         super.play();

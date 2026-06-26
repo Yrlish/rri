@@ -16,10 +16,10 @@ export default class SandboxRound {
 	_rerollButton: HTMLButtonElement = html.node("button");
 	_placedDice = new Map<Cell, HTMLDice>();
 	_lastClickTs = 0;
-	_mandatoryCount = 5;
+	_mandatoryCount = 4;
 
 	constructor(readonly number: number, readonly _board: Board, readonly _bonusPool: BonusPool) {
-		this._pool = new Pool(`Round #${this.number} - Sandbox Mode`);
+		this._pool = new Pool(`Round #${this.number} - Sandbox`);
 		this.node = this._pool.node;
 
 		this._endButton.textContent = `End round #${this.number}`;
@@ -43,7 +43,7 @@ export default class SandboxRound {
 			this._endButton.addEventListener("click", _ => {
 				let valid = this._validatePlacement();
 				if (!valid) {
-					alert("You must place all 5 mandatory dice before ending the round.");
+					alert("You must place all 4 mandatory dice before ending the round.");
 					return;
 				}
 				this._end();
@@ -183,20 +183,25 @@ export default class SandboxRound {
 			return;
 		}
 
-		// Remove old unplaced mandatory dice from pool
-		unplacedMandatory.forEach(dice => {
-			this._pool.node.removeChild(dice.node);
-			let index = this._pool._dices.indexOf(dice);
-			if (index > -1) {
-				this._pool._dices.splice(index, 1);
+		// Replace unplaced mandatory dice in-place
+		unplacedMandatory.forEach((dice, index) => {
+			// Create new random die
+			const DICE_REGULAR_1 = ["road-i", "rail-i", "road-l", "rail-l", "road-t", "rail-t"];
+			const DICE_REGULAR_2 = ["bridge", "bridge", "rail-road-i", "rail-road-i", "rail-road-l", "rail-road-l"];
+			const allRegular = [...DICE_REGULAR_1, ...DICE_REGULAR_2];
+			const randomSid = allRegular[Math.floor(Math.random() * allRegular.length)];
+			const newDice = new HTMLDice("plain", randomSid);
+			
+			// Replace the old die with the new one in-place
+			const oldIndex = this._pool._dices.indexOf(dice);
+			if (oldIndex > -1) {
+				this._pool._dices[oldIndex] = newDice;
+				// Replace the DOM node
+				dice.node.replaceWith(newDice.node);
+				// Add event listener to the new die
+				newDice.node.addEventListener(DOWN_EVENT, this._pool);
 			}
 		});
-
-		// Create new random dice
-		let newDice = createDice(HTMLDice, "sandbox", this.number);
-		
-		// Add them to the pool
-		newDice.forEach(dice => this._pool.add(dice));
 
 		// Update the pool display
 		this._syncEnd();

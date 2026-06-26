@@ -5,9 +5,12 @@ import Game from "./game.js";
 import SandboxRound from "./round-sandbox.js";
 import Board from "./board-canvas.js";
 import * as scoreTable from "./score-table.js";
+import { SandboxBonusPool } from "./pool.js";
 
 
 export default class SandboxGame extends Game {
+	_bonusPool = new SandboxBonusPool();
+
 	constructor(_board:Board) {
 		super(_board);
 	}
