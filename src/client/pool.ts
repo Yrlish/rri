@@ -121,10 +121,14 @@ export class BonusPool extends Pool {
 export class SandboxBonusPool extends BonusPool {
 	constructor() {
 		super();
-		// Override the handleEvent to not check limits
+		// Override the handleEvent to not check limits and not check disabled state
 		this.handleEvent = (e: Event) => {
 			// In sandbox mode, allow unlimited usage of special pieces
-			super.handleEvent(e);
+			// Don't check _locked, _used, or disabled state
+			let target = e.currentTarget as HTMLElement;
+			let dice = this._dices.filter(dice => dice.node == target)[0];
+			if (!dice || dice.blocked) { return; }
+			this.onClick(dice);
 		};
 	}
 

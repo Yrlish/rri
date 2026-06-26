@@ -2124,10 +2124,16 @@ class BonusPool extends Pool {
 class SandboxBonusPool extends BonusPool {
     constructor() {
         super();
-        // Override the handleEvent to not check limits
+        // Override the handleEvent to not check limits and not check disabled state
         this.handleEvent = (e) => {
             // In sandbox mode, allow unlimited usage of special pieces
-            super.handleEvent(e);
+            // Don't check _locked, _used, or disabled state
+            let target = e.currentTarget;
+            let dice = this._dices.filter(dice => dice.node == target)[0];
+            if (!dice || dice.blocked) {
+                return;
+            }
+            this.onClick(dice);
         };
     }
     disable(dice) {
@@ -2573,10 +2579,13 @@ class SandboxRound {
         this._syncEnd();
     }
     _tryToCycle(cell) {
-        if (!this._placedDice.has(cell)) {
+        // In sandbox mode, allow rotation of ANY tile on the board
+        // (not just pieces placed in the current round)
+        if (!cell.tile) {
             return;
         }
         this._board.cycleTransform(cell.x, cell.y);
+        this._board.signal([]);
         this._syncEnd();
     }
     _syncEnd() {
