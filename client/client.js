@@ -2602,9 +2602,10 @@ class SandboxRound {
     }
     _getRemainingMandatoryCount() {
         // Count how many mandatory dice are still in the pool (not placed)
+        // Only count dice that came from the regular pool, not from bonus pool
         let placedMandatory = 0;
         for (let dice of this._placedDice.values()) {
-            if (dice.mandatory) {
+            if (dice.mandatory && this._pool._dices.includes(dice)) {
                 placedMandatory++;
             }
         }
@@ -2620,7 +2621,7 @@ class SandboxRound {
         // In sandbox mode, we just need to have placed all mandatory dice
         let placedMandatory = 0;
         for (let dice of this._placedDice.values()) {
-            if (dice.mandatory) {
+            if (dice.mandatory && this._pool._dices.includes(dice)) {
                 placedMandatory++;
             }
         }
