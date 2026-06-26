@@ -6,10 +6,10 @@ function clamp(direction) {
     direction = direction % 4;
     return (direction >= 0 ? direction : direction + 4);
 }
-const all = [N, E, S, W];
+const all$1 = [N, E, S, W];
 const Vector = [[0, -1], [1, 0], [0, 1], [-1, 0]];
 
-const repo = {};
+const repo$1 = {};
 class Transform {
     constructor(direction, offset) {
         this._direction = direction;
@@ -42,17 +42,17 @@ class Transform {
 function create(id) {
     let offset = Math.abs(Number(id));
     let direction = (id.startsWith("-") ? -1 : 1);
-    repo[id] = new Transform(direction, offset);
-    return get(id);
+    repo$1[id] = new Transform(direction, offset);
+    return get$2(id);
 }
-function get(id) {
-    if (!(id in repo)) {
+function get$2(id) {
+    if (!(id in repo$1)) {
         throw new Error(`Transform ${id} not found`);
     }
-    return repo[id];
+    return repo$1[id];
 }
-const all$1 = ["0", "1", "2", "3", "-0", "-1", "-2", "-3"];
-all$1.forEach(create);
+const all = ["0", "1", "2", "3", "-0", "-1", "-2", "-3"];
+all.forEach(create);
 
 const NONE = 0;
 const RAIL = 1;
@@ -61,7 +61,7 @@ const LAKE = 3;
 const FOREST = 4;
 const RIVER = 5;
 
-const repo$1 = {};
+const repo = {};
 const partials = {
     "rail-half": {
         edges: [
@@ -448,16 +448,16 @@ const partials = {
     }
 };
 function get$1(id) {
-    if (!(id in repo$1)) {
+    if (!(id in repo)) {
         throw new Error(`Shape ${id} not found`);
     }
-    return repo$1[id];
+    return repo[id];
 }
 function getTransforms(edges) {
     let cache = new Set();
     function filter(t) {
-        let transform = get(t);
-        let key = all.map(d => {
+        let transform = get$2(t);
+        let key = all$1.map(d => {
             d = transform.apply(d);
             return edges[d].type;
         }).join("/");
@@ -467,12 +467,12 @@ function getTransforms(edges) {
         cache.add(key);
         return true;
     }
-    return all$1.filter(filter);
+    return all.filter(filter);
 }
 for (let key in partials) {
     let shape = partials[key];
     let transforms = getTransforms(shape.edges);
-    repo$1[key] = Object.assign({}, shape, { transforms });
+    repo[key] = Object.assign({}, shape, { transforms });
 }
 
 class Tile {
@@ -487,7 +487,7 @@ class Tile {
     toJSON() { return this._data; }
     clone() { return Tile.fromJSON(this.toJSON()); }
     getEdge(direction) {
-        let transform = get(this.transform);
+        let transform = get$2(this.transform);
         direction = transform.invert(direction);
         let edge = get$1(this._data.sid).edges[direction];
         return {
@@ -555,7 +555,7 @@ function getSubgraph(start, cells) {
         }
         subgraph.push(cell);
         let tile = cell.tile;
-        let outDirections = (current.from === null ? all : tile.getEdge(current.from).connects);
+        let outDirections = (current.from === null ? all$1 : tile.getEdge(current.from).connects);
         outDirections.forEach(d => {
             let edgeType = tile.getEdge(d).type;
             if (edgeType == NONE) {
@@ -603,7 +603,7 @@ function getLongestFrom(cell, from, ctx) {
     }
     let path = [];
     let tile = cell.tile;
-    let outDirections = (from === null ? all : tile.getEdge(from).connects);
+    let outDirections = (from === null ? all$1 : tile.getEdge(from).connects);
     ctx.lockedCells.add(cell);
     outDirections
         .filter(d => tile.getEdge(d).type == ctx.edgeType)
@@ -635,7 +635,7 @@ function getLongest(edgeType, cells) {
             return;
         }
         let tile = cell.tile;
-        return all.some(d => tile.getEdge(d).type == edgeType);
+        return all$1.some(d => tile.getEdge(d).type == edgeType);
     }
     let starts = cells.filter(contains);
     let bestPath = [];
@@ -672,7 +672,7 @@ function isDeadend(deadend, cells) {
 function getDeadends(cells) {
     let deadends = [];
     cells.filter(cell => !cell.border).forEach(cell => {
-        all.forEach(direction => {
+        all$1.forEach(direction => {
             let deadend = { cell, direction };
             isDeadend(deadend, cells) && deadends.push(deadend);
         });
@@ -689,7 +689,7 @@ function extractLake(lakeCells, allCells) {
         if (!tile) {
             continue;
         }
-        all.filter(d => tile.getEdge(d).type == LAKE).forEach(d => {
+        all$1.filter(d => tile.getEdge(d).type == LAKE).forEach(d => {
             let neighbor = getNeighbor(current, d, allCells);
             if (!neighbor.tile) {
                 return;
@@ -715,7 +715,7 @@ function getLakes(cells) {
             return;
         }
         let tile = cell.tile;
-        return all.some(d => tile.getEdge(d).type == LAKE);
+        return all$1.some(d => tile.getEdge(d).type == LAKE);
     }
     let lakeCells = cells.filter(isLake);
     let sizes = [];
@@ -728,7 +728,7 @@ function isRiverCell(cell) {
     if (cell.border || !cell.tile) {
         return false;
     }
-    return all.some(direction => {
+    return all$1.some(direction => {
         var _a;
         return ((_a = cell.tile) === null || _a === void 0 ? void 0 : _a.getEdge(direction).type) == RIVER;
     });
@@ -738,7 +738,7 @@ function getRiverNeighborsOnly(cell, cells, allowed) {
     if (!cell.tile) {
         return result;
     }
-    all.forEach(direction => {
+    all$1.forEach(direction => {
         if (cell.tile.getEdge(direction).type != RIVER) {
             return;
         }
@@ -804,7 +804,7 @@ function getRiverBonus(river, cells) {
         if (!cell.tile) {
             return;
         }
-        all.forEach(direction => {
+        all$1.forEach(direction => {
             if (cell.tile.getEdge(direction).type != RIVER) {
                 return;
             }
@@ -837,10 +837,10 @@ function getForests(cells) {
             return;
         }
         let tile = cell.tile;
-        return all.every(d => tile.getEdge(d).type != FOREST);
+        return all$1.every(d => tile.getEdge(d).type != FOREST);
     }
     function hasForestNeighbor(cell) {
-        return all.some(d => {
+        return all$1.some(d => {
             let neighbor = getNeighbor(cell, d, cells);
             if (!neighbor.tile) {
                 return;
@@ -851,7 +851,7 @@ function getForests(cells) {
     }
     return cells.filter(isRailRoad).filter(hasForestNeighbor);
 }
-function get$2(cells) {
+function get(cells) {
     let river = getBestRiver(cells);
     return {
         exits: getExits(cells),
@@ -930,8 +930,15 @@ class Board {
         this._tileCtor = _tileCtor;
         this.blob = null;
         this._cells = new CellRepo();
+        this._sandboxMode = false;
         this.node = this._build();
         this._placeInitialTiles();
+    }
+    enableSandboxMode() {
+        this._sandboxMode = true;
+    }
+    disableSandboxMode() {
+        this._sandboxMode = false;
     }
     _build() { return null; }
     ;
@@ -939,7 +946,7 @@ class Board {
     ;
     showScore(_score) { }
     onClick(_cell) { }
-    getScore() { return get$2(this._cells); }
+    getScore() { return get(this._cells); }
     fromJSON(cells) {
         const Tile = this._tileCtor;
         this._cells.forEach(cell => {
@@ -978,7 +985,7 @@ class Board {
         if (!tile) {
             return;
         }
-        let avail = this._getTransforms(tile, x, y);
+        let avail = this._sandboxMode ? tile.getTransforms() : this._getTransforms(tile, x, y);
         let index = avail.indexOf(tile.transform);
         if (index == -1 || avail.length <= 1) {
             return;
@@ -1001,7 +1008,7 @@ class Board {
         cell.round = round;
     }
     getNeighborEdges(x, y) {
-        return all.map(dir => {
+        return all$1.map(dir => {
             let vector = Vector[dir];
             let neighbor = this._cells.at(x + vector[0], y + vector[1]).tile;
             if (!neighbor) {
@@ -1115,7 +1122,7 @@ const RAIL_TICK_LARGE = [RAIL_TICK_WIDTH, 8];
 const ROAD_TICK = [6, 4];
 const STARTS = [[0.5, 0], [1, 0.5], [0.5, 1], [0, 0.5]];
 const TO_CENTER = Vector.map((_, i, all) => all[clamp(i + 2)]);
-const DPR = devicePixelRatio;
+const DPR$1 = devicePixelRatio;
 function toAbs(p) {
     return p.map($ => $ * TILE);
 }
@@ -1147,9 +1154,9 @@ function createLakeCanvas() {
 const lakeCanvas = createLakeCanvas();
 class CanvasDrawContext {
     constructor(canvas) {
-        canvas.width = canvas.height = TILE * DPR;
+        canvas.width = canvas.height = TILE * DPR$1;
         this._ctx = canvas.getContext("2d");
-        this._ctx.scale(DPR, DPR);
+        this._ctx.scale(DPR$1, DPR$1);
         this._ctx.lineWidth = LINE_WIDTH;
     }
     styleLine() {
@@ -1176,7 +1183,7 @@ class CanvasDrawContext {
     }
     station() {
         const ctx = this._ctx;
-        let size = [ctx.canvas.width, ctx.canvas.height].map($ => $ / DPR);
+        let size = [ctx.canvas.width, ctx.canvas.height].map($ => $ / DPR$1);
         ctx.fillStyle = "#000";
         ctx.fillRect(size[0] / 2 - STATION / 2, size[1] / 2 - STATION / 2, STATION, STATION);
     }
@@ -1611,16 +1618,16 @@ class HTMLTile extends Tile {
         const source = this._visual.canvas;
         const canvas = node("canvas", { width: source.width, height: source.height });
         const ctx = canvas.getContext("2d");
-        get(this._data.tid).applyToContext(ctx);
+        get$2(this._data.tid).applyToContext(ctx);
         ctx.drawImage(source, 0, 0);
         return canvas;
     }
     _applyTransform() {
-        this.node.style.transform = get(this._data.tid).getCSS();
+        this.node.style.transform = get$2(this._data.tid).getCSS();
     }
 }
 
-const DPR$1 = devicePixelRatio;
+const DPR = devicePixelRatio;
 const BTILE = TILE / 2;
 const bodyStyle = getComputedStyle(document.body);
 const BORDER = Number(bodyStyle.getPropertyValue("--border-thick"));
@@ -1700,8 +1707,8 @@ class BoardCanvas extends Board {
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         this._pendingCells.forEach(cell => {
-            let pxx = cellToPx(cell.x) * DPR$1;
-            let pxy = cellToPx(cell.y) * DPR$1;
+            let pxx = cellToPx(cell.x) * DPR;
+            let pxy = cellToPx(cell.y) * DPR;
             ctx.drawImage(cell.tile.createCanvas(), pxx, pxy);
             cell.node.remove();
         });
@@ -1775,14 +1782,14 @@ class BoardCanvas extends Board {
         let canvas = node("canvas");
         node$1.appendChild(canvas);
         const SIZE = 2 * (BTILE + BORDER) + BOARD * TILE + (BOARD - 1) * THIN;
-        canvas.width = canvas.height = SIZE * DPR$1;
+        canvas.width = canvas.height = SIZE * DPR;
         const PX = `${SIZE}px`;
         canvas.style.width = canvas.style.height = PX;
         document.body.style.setProperty("--board-width", PX);
         const ctx = canvas.getContext("2d");
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.scale(DPR$1, DPR$1);
+        ctx.scale(DPR, DPR);
         this._ctx = ctx;
         this._drawGrid();
         return node$1;
@@ -1798,14 +1805,14 @@ class BoardCanvas extends Board {
         // grid
         ctx.beginPath();
         let offsetOdd = 0, offsetEven = 0, lineWidth = THIN;
-        switch (DPR$1) {
+        switch (DPR) {
             case 1:
                 offsetOdd = offsetEven = 0.5;
                 break;
             case 1.5:
                 offsetOdd = 2 / 3;
                 offsetEven = 1 / 3;
-                lineWidth /= DPR$1;
+                lineWidth /= DPR;
                 break;
         }
         ctx.lineWidth = lineWidth;
@@ -1901,7 +1908,8 @@ const ROUNDS = {
     "lake": 6,
     "river": 6,
     "forest": 7,
-    "demo": 1
+    "demo": 1,
+    "sandbox": 999 // Large number to allow unlimited play
 };
 function randomType(types) {
     return types[Math.floor(Math.random() * types.length)];
@@ -1933,16 +1941,33 @@ function createDice(Ctor, type, round) {
             else {
                 return createDice(Ctor, "normal", round);
             }
-        default:
+        case "sandbox":
+            // Sandbox mode: return 4 random regular dice
             let result = [];
             let templates = [DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_2];
-            while (templates.length) {
+            while (templates.length && result.length < 4) {
                 let index = Math.floor(Math.random() * templates.length);
                 let template = templates.splice(index, 1)[0];
                 let sid = randomType(template);
                 result.push(new Ctor("plain", sid));
             }
+            // If we didn't get 4, fill with random from all regular dice
+            while (result.length < 4) {
+                let allRegular = [...DICE_REGULAR_1, ...DICE_REGULAR_2];
+                let sid = randomType(allRegular);
+                result.push(new Ctor("plain", sid));
+            }
             return result;
+        default:
+            let resultDefault = [];
+            let templatesDefault = [DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_2];
+            while (templatesDefault.length) {
+                let index = Math.floor(Math.random() * templatesDefault.length);
+                let template = templatesDefault.splice(index, 1)[0];
+                let sid = randomType(template);
+                resultDefault.push(new Ctor("plain", sid));
+            }
+            return resultDefault;
     }
 }
 const DEMO = [
@@ -2045,6 +2070,12 @@ class Pool {
             dice.blocked = (cells.length == 0);
         });
     }
+    syncSandbox(_board) {
+        // In sandbox mode, never block dice - they can be placed anywhere
+        this._dices.filter(dice => !dice.disabled).forEach(dice => {
+            dice.blocked = false;
+        });
+    }
 }
 class BonusPool extends Pool {
     constructor() {
@@ -2090,8 +2121,52 @@ class BonusPool extends Pool {
         indices.forEach(i => this.disable(this._dices[i]));
     }
 }
+class SandboxBonusPool extends BonusPool {
+    constructor() {
+        super();
+        // Override the handleEvent to not check limits and not check disabled state
+        this.handleEvent = (e) => {
+            // In sandbox mode, allow unlimited usage of special pieces
+            // Don't check _locked, _used, or disabled state
+            let target = e.currentTarget;
+            let dice = this._dices.filter(dice => dice.node == target)[0];
+            if (!dice || dice.blocked) {
+                return;
+            }
+            this.onClick(dice);
+        };
+    }
+    disable(dice) {
+        // In sandbox mode, don't track usage - just disable the die
+        // Don't call parent's disable which tracks _used and _locked
+        if (!this._dices.includes(dice)) {
+            return false;
+        }
+        dice.disabled = true;
+        return true;
+    }
+    enable(dice) {
+        // In sandbox mode, don't track usage - just enable the die
+        // Don't call parent's enable which tracks _used and _locked
+        if (!this._dices.includes(dice)) {
+            return false;
+        }
+        dice.disabled = false;
+        return true;
+    }
+    unlock() {
+        // In sandbox mode, always unlocked - no-op
+    }
+    toJSON() {
+        return this._dices.filter(d => d.disabled).map(d => this._dices.indexOf(d));
+    }
+    fromJSON(indices) {
+        this._locked = false;
+        indices.forEach(i => this.disable(this._dices[i]));
+    }
+}
 
-const dataset = document.body.dataset;
+const dataset$1 = document.body.dataset;
 class Game {
     constructor(_board) {
         this._board = _board;
@@ -2099,11 +2174,11 @@ class Game {
         this._bonusPool = new BonusPool();
     }
     async play() {
-        dataset.stage = "game";
+        dataset$1.stage = "game";
         return true;
     }
     _outro() {
-        dataset.stage = "outro";
+        dataset$1.stage = "outro";
     }
 }
 
@@ -2381,6 +2456,265 @@ class SingleGame extends Game {
             round.node.remove();
             num++;
         }
+        this._outro();
+        return true;
+    }
+    _outro() {
+        super._outro();
+        let s = this._board.getScore();
+        this._board.showScore(s);
+        const parent = document.querySelector("#score");
+        parent.innerHTML = "";
+        parent.appendChild(renderSingle(s));
+    }
+}
+
+class SandboxRound {
+    constructor(number, _board, _bonusPool) {
+        this.number = number;
+        this._board = _board;
+        this._bonusPool = _bonusPool;
+        this._pending = null;
+        this._endButton = node("button");
+        this._rerollButton = node("button");
+        this._placedDice = new Map();
+        this._lastClickTs = 0;
+        this._mandatoryCount = 4;
+        this._pool = new Pool(`Round #${this.number} - Sandbox`);
+        this.node = this._pool.node;
+        this._endButton.textContent = `End round #${this.number}`;
+        this._rerollButton.textContent = "Reroll unplaced dice";
+        this._rerollButton.style.marginLeft = "10px";
+    }
+    play(dice) {
+        dice.forEach(dice => this._pool.add(dice));
+        this.node.appendChild(this._endButton);
+        this.node.appendChild(this._rerollButton);
+        this._pool.onClick = dice => this._onPoolClick(dice);
+        this._bonusPool.onClick = dice => this._onPoolClick(dice);
+        this._board.onClick = cell => this._onBoardClick(cell);
+        this._syncEnd();
+        this._bonusPool.unlock();
+        return new Promise(resolve => {
+            this._endButton.addEventListener("click", _ => {
+                let valid = this._validatePlacement();
+                if (!valid) {
+                    alert("You must place all 4 mandatory dice before ending the round.");
+                    return;
+                }
+                this._end();
+                resolve();
+            });
+            this._rerollButton.addEventListener("click", _ => {
+                this._rerollUnplaced();
+            });
+        });
+    }
+    _end() {
+        this._board.commit(this.number);
+        function noop() { }
+        this._pool.onClick = noop;
+        this._bonusPool.onClick = noop;
+        this._board.onClick = noop;
+    }
+    _onPoolClick(dice) {
+        if (this._pending == dice) {
+            this._pending = null;
+            this._board.signal([]);
+            this._pool.pending(null);
+            this._bonusPool.pending(null);
+        }
+        else {
+            this._pending = dice;
+            // In sandbox mode, all empty cells are available
+            let available = this._getAllEmptyCells();
+            this._board.signal(available);
+            this._pool.pending(dice);
+            this._bonusPool.pending(dice);
+        }
+    }
+    _onBoardClick(cell) {
+        const ts = Date.now();
+        if (ts - this._lastClickTs < DBLCLICK) {
+            this._tryToRemove(cell);
+        }
+        else if (this._pending) {
+            this._tryToAdd(cell);
+        }
+        else {
+            this._tryToCycle(cell);
+            this._lastClickTs = ts;
+        }
+    }
+    _tryToRemove(cell) {
+        let dice = this._placedDice.get(cell);
+        if (!dice) {
+            return;
+        }
+        this._placedDice.delete(cell);
+        this._board.place(null, cell.x, cell.y, 0);
+        this._pool.enable(dice);
+        this._bonusPool.enable(dice);
+        this._syncEnd();
+    }
+    _tryToAdd(cell) {
+        if (!this._pending) {
+            return;
+        }
+        // In sandbox mode, we can place anywhere on empty cells
+        if (cell.border || cell.tile) {
+            return false;
+        }
+        const x = cell.x;
+        const y = cell.y;
+        // Place with transform 0 (default)
+        this._board.place(this._pending.tile.clone(), x, y, this.number);
+        this._board.signal([]);
+        this._pool.pending(null);
+        this._bonusPool.pending(null);
+        // Only disable regular dice, not special pieces from bonus pool
+        // Special pieces should remain visually enabled for unlimited use
+        if (this._pool._dices.includes(this._pending)) {
+            this._pool.disable(this._pending);
+        }
+        // Don't disable special pieces from bonus pool
+        this._placedDice.set(cell, this._pending);
+        this._pending = null;
+        this._syncEnd();
+    }
+    _tryToCycle(cell) {
+        // In sandbox mode, allow rotation of ANY tile on the board
+        // (not just pieces placed in the current round)
+        if (!cell.tile) {
+            return;
+        }
+        this._board.cycleTransform(cell.x, cell.y);
+        this._board.signal([]);
+        this._syncEnd();
+    }
+    _syncEnd() {
+        this._pool.syncSandbox(this._board);
+        let remainingMandatory = this._getRemainingMandatoryCount();
+        this._endButton.disabled = (remainingMandatory > 0);
+        // Disable reroll button when all mandatory dice are placed
+        let unplacedMandatory = this._pool._dices.filter(d => d.mandatory && !d.disabled);
+        this._rerollButton.disabled = (unplacedMandatory.length === 0);
+    }
+    _getRemainingMandatoryCount() {
+        // Count how many mandatory dice are still in the pool (not placed)
+        let placedMandatory = 0;
+        for (let dice of this._placedDice.values()) {
+            if (dice.mandatory) {
+                placedMandatory++;
+            }
+        }
+        return this._mandatoryCount - placedMandatory;
+    }
+    _getAllEmptyCells() {
+        // Return all non-border cells that don't have a tile
+        return this._board._cells.filter(cell => {
+            return !cell.border && !cell.tile;
+        });
+    }
+    _validatePlacement() {
+        // In sandbox mode, we just need to have placed all mandatory dice
+        let placedMandatory = 0;
+        for (let dice of this._placedDice.values()) {
+            if (dice.mandatory) {
+                placedMandatory++;
+            }
+        }
+        return placedMandatory >= this._mandatoryCount;
+    }
+    _rerollUnplaced() {
+        // Find all unplaced mandatory dice and replace them with new random ones
+        let unplacedMandatory = this._pool._dices.filter(dice => {
+            return dice.mandatory && !dice.disabled && !dice.blocked;
+        });
+        if (unplacedMandatory.length === 0) {
+            // Button is disabled, so this shouldn't be reached
+            return;
+        }
+        // Replace unplaced mandatory dice in-place
+        unplacedMandatory.forEach((dice) => {
+            // Create new random die
+            const DICE_REGULAR_1 = ["road-i", "rail-i", "road-l", "rail-l", "road-t", "rail-t"];
+            const DICE_REGULAR_2 = ["bridge", "bridge", "rail-road-i", "rail-road-i", "rail-road-l", "rail-road-l"];
+            const allRegular = [...DICE_REGULAR_1, ...DICE_REGULAR_2];
+            const randomSid = allRegular[Math.floor(Math.random() * allRegular.length)];
+            const newDice = new HTMLDice("plain", randomSid);
+            // Replace the old die with the new one in-place
+            const oldIndex = this._pool._dices.indexOf(dice);
+            if (oldIndex > -1) {
+                this._pool._dices[oldIndex] = newDice;
+                // Replace the DOM node
+                dice.node.replaceWith(newDice.node);
+                // Add event listener to the new die
+                newDice.node.addEventListener(DOWN_EVENT, this._pool);
+            }
+        });
+        // Update the pool display
+        this._syncEnd();
+    }
+}
+
+class SandboxGame extends Game {
+    constructor(_board) {
+        super(_board);
+        this._bonusPool = new SandboxBonusPool();
+        this._endGameButton = node("button");
+        this._shouldEndGame = false;
+        this._currentRoundResolve = null;
+    }
+    async play() {
+        super.play();
+        this._node.innerHTML = "";
+        this._node.appendChild(this._bonusPool.node);
+        // Add end game button below the board
+        this._endGameButton.textContent = "End Game";
+        this._endGameButton.style.marginTop = "10px";
+        this._endGameButton.style.display = "block";
+        this._endGameButton.style.marginLeft = "auto";
+        this._endGameButton.style.marginRight = "auto";
+        // Insert the end game button after the bonus pool
+        this._node.appendChild(this._endGameButton);
+        let num = 1;
+        // Sandbox mode runs for a large number of rounds (effectively unlimited)
+        while (num <= ROUNDS["sandbox"] && !this._shouldEndGame) {
+            let round = new SandboxRound(num, this._board, this._bonusPool);
+            this._node.insertBefore(round.node, this._endGameButton);
+            let dice = createDice(HTMLDice, "sandbox", num);
+            // Set up a promise that can be resolved when end game is clicked
+            const roundPromise = new Promise(resolve => {
+                this._currentRoundResolve = () => {
+                    resolve();
+                };
+            });
+            // Add event listener to end game button for this round
+            const endGameClickHandler = () => {
+                this._shouldEndGame = true;
+                if (this._currentRoundResolve) {
+                    this._currentRoundResolve();
+                }
+            };
+            this._endGameButton.addEventListener("click", endGameClickHandler, { once: true });
+            // Start the round
+            const roundPlayPromise = round.play(dice);
+            // Wait for either the round to complete or the end game button to be clicked
+            await Promise.race([
+                roundPlayPromise,
+                roundPromise
+            ]);
+            // Clean up
+            this._endGameButton.removeEventListener("click", endGameClickHandler);
+            this._currentRoundResolve = null;
+            round.node.remove();
+            // Only increment round number if we didn't end the game
+            if (!this._shouldEndGame) {
+                num++;
+            }
+        }
+        this._endGameButton.remove();
         this._outro();
         return true;
     }
@@ -2783,7 +3117,7 @@ function load(key) {
     }
 }
 
-const dataset$1 = document.body.dataset;
+const dataset = document.body.dataset;
 let board;
 function download() {
     if (!board.blob) {
@@ -2796,25 +3130,38 @@ function download() {
     a.remove();
 }
 function goIntro() {
-    dataset$1.stage = "intro";
+    dataset.stage = "intro";
     board = new BoardCanvas();
     showBoard(board);
 }
 async function goGame(type) {
-    const game = (type == "multi" ? new MultiGame(board) : new SingleGame(board, type));
+    // Enable sandbox mode on the board if starting a sandbox game
+    if (type == "sandbox") {
+        board.enableSandboxMode();
+    }
+    else {
+        board.disableSandboxMode();
+    }
+    const game = (type == "multi" ? new MultiGame(board) :
+        type == "sandbox" ? new SandboxGame(board) :
+            new SingleGame(board, type));
     let played = await game.play();
     if (!played) {
         goIntro();
     }
 }
 function onClick(name, cb) {
-    document.querySelector(`[name=${name}]`).addEventListener("click", cb);
+    const el = document.querySelector(`[name=${name}]`);
+    if (el) {
+        el.addEventListener("click", cb);
+    }
 }
 function init() {
     onClick("start-normal", () => goGame("normal"));
     onClick("start-lake", () => goGame("lake"));
     onClick("start-river", () => goGame("river"));
     onClick("start-forest", () => goGame("forest"));
+    onClick("start-sandbox", () => goGame("sandbox"));
     onClick("start-multi", () => goGame("multi"));
     onClick("again", () => goIntro());
     onClick("download", () => download());

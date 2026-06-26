@@ -14,7 +14,7 @@ export default class Pool {
 		let heading = html.node("h2", {className:"heading"});
 		heading.append(label);
 		this.node.append(heading);
-    }
+	}
 
 	get remaining() {
 		return this._dices.filter(d => d.mandatory && !d.disabled && !d.blocked);
@@ -58,6 +58,13 @@ export default class Pool {
 			dice.blocked = (cells.length == 0);
 		});
 	}
+
+	syncSandbox(_board: Board) {
+		// In sandbox mode, never block dice - they can be placed anywhere
+		this._dices.filter(dice => !dice.disabled).forEach(dice => {
+			dice.blocked = false;
+		});
+	}
 }
 
 export class BonusPool extends Pool {
@@ -99,6 +106,50 @@ export class BonusPool extends Pool {
 
 	unlock() {
 		this._locked = false;
+	}
+
+	toJSON() {
+		return this._dices.filter(d => d.disabled).map(d => this._dices.indexOf(d));
+	}
+
+	fromJSON(indices: number[]) {
+		this._locked = false;
+		indices.forEach(i => this.disable(this._dices[i]));
+	}
+}
+
+export class SandboxBonusPool extends BonusPool {
+	constructor() {
+		super();
+		// Override the handleEvent to not check limits and not check disabled state
+		this.handleEvent = (e: Event) => {
+			// In sandbox mode, allow unlimited usage of special pieces
+			// Don't check _locked, _used, or disabled state
+			let target = e.currentTarget as HTMLElement;
+			let dice = this._dices.filter(dice => dice.node == target)[0];
+			if (!dice || dice.blocked) { return; }
+			this.onClick(dice);
+		};
+	}
+
+	disable(dice: HTMLDice) {
+		// In sandbox mode, don't track usage - just disable the die
+		// Don't call parent's disable which tracks _used and _locked
+		if (!this._dices.includes(dice)) { return false; }
+		dice.disabled = true;
+		return true;
+	}
+
+	enable(dice: HTMLDice) {
+		// In sandbox mode, don't track usage - just enable the die
+		// Don't call parent's enable which tracks _used and _locked
+		if (!this._dices.includes(dice)) { return false; }
+		dice.disabled = false;
+		return true;
+	}
+
+	unlock() {
+		// In sandbox mode, always unlocked - no-op
 	}
 
 	toJSON() {

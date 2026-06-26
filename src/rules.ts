@@ -5,14 +5,15 @@ interface Type<T> {
 	new(type: DiceType, sid: string): T;
 }
 
-export type GameType = "normal" | "lake" | "river" | "forest" | "demo";
+export type GameType = "normal" | "lake" | "river" | "forest" | "demo" | "sandbox";
 
 export const ROUNDS: {[type in GameType]: number} = {
 	"normal": 7,
 	"lake": 6,
 	"river": 6,
 	"forest": 7,
-	"demo": 1
+	"demo": 1,
+	"sandbox": 999 // Large number to allow unlimited play
 }
 
 function randomType(types: string[]) {
@@ -51,16 +52,35 @@ export function createDice<T extends Dice>(Ctor: Type<T>, type: GameType, round:
 			}
 		break;
 
-		default:
+		case "sandbox":
+			// Sandbox mode: return 4 random regular dice
 			let result = [];
 			let templates = [DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_2];
-			while (templates.length) {
+			while (templates.length && result.length < 4) {
 				let index = Math.floor(Math.random()*templates.length);
 				let template = templates.splice(index, 1)[0];
 				let sid = randomType(template);
 				result.push(new Ctor("plain", sid));
 			}
+			// If we didn't get 4, fill with random from all regular dice
+			while (result.length < 4) {
+				let allRegular = [...DICE_REGULAR_1, ...DICE_REGULAR_2];
+				let sid = randomType(allRegular);
+				result.push(new Ctor("plain", sid));
+			}
 			return result;
+		break;
+
+		default:
+			let resultDefault = [];
+			let templatesDefault = [DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_1, DICE_REGULAR_2];
+			while (templatesDefault.length) {
+				let index = Math.floor(Math.random()*templatesDefault.length);
+				let template = templatesDefault.splice(index, 1)[0];
+				let sid = randomType(template);
+				resultDefault.push(new Ctor("plain", sid));
+			}
+			return resultDefault;
 		break;
 	}
 
