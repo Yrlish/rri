@@ -3,6 +3,7 @@ import * as html from "./html.js";
 import * as boardManager from "./board-manager.js";
 import { GameType } from "../rules.js";
 import SingleGame from "./game-single.js";
+import SandboxGame from "./game-sandbox.js";
 import MultiGame from "./game-multi.js";
 
 const dataset = document.body.dataset;
@@ -26,8 +27,10 @@ function goIntro() {
 	boardManager.showBoard(board);
 }
 
-async function goGame(type: GameType | "multi") {
-	const game = (type == "multi" ? new MultiGame(board) : new SingleGame(board, type));
+async function goGame(type: GameType | "multi" | "sandbox") {
+	const game = (type == "multi" ? new MultiGame(board) : 
+	              type == "sandbox" ? new SandboxGame(board) : 
+	              new SingleGame(board, type));
 	let played = await game.play();
 	if (!played) { goIntro(); }
 }
@@ -41,6 +44,7 @@ function init() {
 	onClick("start-lake", () => goGame("lake"));
 	onClick("start-river", () => goGame("river"));
 	onClick("start-forest", () => goGame("forest"));
+	onClick("start-sandbox", () => goGame("sandbox"));
 	onClick("start-multi", () => goGame("multi"));
 	onClick("again", () => goIntro());
 	onClick("download", () => download());
