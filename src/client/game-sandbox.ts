@@ -7,13 +7,13 @@ import Board from "./board-canvas.js";
 import * as scoreTable from "./score-table.js";
 import { SandboxBonusPool } from "./pool.js";
 import * as html from "./html.js";
-import { Cell } from "../cell-repo.js";
 
 
 export default class SandboxGame extends Game {
 	_bonusPool = new SandboxBonusPool();
 	_endGameButton: HTMLButtonElement = html.node("button");
 	_shouldEndGame = false;
+	_currentRoundResolve: (() => void) | null = null;
 
 	constructor(_board:Board) {
 		super(_board);
@@ -31,11 +31,6 @@ export default class SandboxGame extends Game {
 		this._endGameButton.style.marginLeft = "auto";
 		this._endGameButton.style.marginRight = "auto";
 		
-		// Add event listener to end game button
-		this._endGameButton.addEventListener("click", () => {
-			this._shouldEndGame = true;
-		});
-		
 		// Insert the end game button after the bonus pool
 		this._node.appendChild(this._endGameButton);
 
@@ -45,15 +40,42 @@ export default class SandboxGame extends Game {
 			let round = new SandboxRound(num, this._board, this._bonusPool);
 			this._node.insertBefore(round.node, this._endGameButton);
 			let dice = createDice(HTMLDice, "sandbox", num);
-			await round.play(dice);
+			
+			// Set up a promise that can be resolved when end game is clicked
+			const roundPromise = new Promise<void>(resolve => {
+				this._currentRoundResolve = () => {
+					resolve();
+				};
+			});
+			
+			// Add event listener to end game button for this round
+			const endGameClickHandler = () => {
+				this._shouldEndGame = true;
+				if (this._currentRoundResolve) {
+					this._currentRoundResolve();
+				}
+			};
+			this._endGameButton.addEventListener("click", endGameClickHandler, { once: true });
+			
+			// Start the round
+			const roundPlayPromise = round.play(dice);
+			
+			// Wait for either the round to complete or the end game button to be clicked
+			await Promise.race([
+				roundPlayPromise,
+				roundPromise
+			]);
+			
+			// Clean up
+			this._endGameButton.removeEventListener("click", endGameClickHandler);
+			this._currentRoundResolve = null;
+			
 			round.node.remove();
 			
-			// Check if board is full after each round
-			if (this._isBoardFull()) {
-				break;
+			// Only increment round number if we didn't end the game
+			if (!this._shouldEndGame) {
+				num++;
 			}
-			
-			num++;
 		}
 
 		this._endGameButton.remove();
@@ -71,19 +93,5 @@ export default class SandboxGame extends Game {
 		const parent = document.querySelector("#score") as HTMLElement;
 		parent.innerHTML = "";
 		parent.appendChild(scoreTable.renderSingle(s));
-	}
-
-	_isBoardFull(): boolean {
-		// Check if all non-border cells have tiles
-		// Use the filter method of CellRepo to get all non-border cells
-		const nonBorderCells = this._board._cells.filter((cell: Cell) => !cell.border);
-		
-		for (let cell of nonBorderCells) {
-			// If a non-border cell doesn't have a tile, board is not full
-			if (!cell.tile) {
-				return false;
-			}
-		}
-		return true;
 	}
 }
