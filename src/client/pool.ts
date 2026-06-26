@@ -2,6 +2,7 @@ import HTMLDice from "./html-dice.js";
 import Board from "../board.js";
 import * as html from "./html.js";
 import { DOWN_EVENT } from "./conf.js";
+import { GameType, UNLIMITED_BONUS } from "../rules.js";
 
 
 const MAX_BONUSES = 3;
@@ -63,6 +64,7 @@ export default class Pool {
 export class BonusPool extends Pool {
 	_used = 0;
 	_locked = false;
+	_gameType: GameType | null = null;
 
 	constructor() {
 		super("Special Routes");
@@ -74,15 +76,25 @@ export class BonusPool extends Pool {
 		});
 	}
 
+	setGameType(type: GameType) {
+		this._gameType = type;
+	}
+
+	get isUnlimited() {
+		return this._gameType ? UNLIMITED_BONUS.includes(this._gameType) : false;
+	}
+
 	handleEvent(e: Event) {
-		if (this._locked || this._used == MAX_BONUSES) { return; }
+		if (this._locked || (!this.isUnlimited && this._used == MAX_BONUSES)) { return; }
 		super.handleEvent(e);
 	}
 
 	disable(dice: HTMLDice) {
 		let disabled = super.disable(dice);
 		if (disabled) { // only if disabled, i.e. the tile was ours
-			this._used++;
+			if (!this.isUnlimited) {
+				this._used++;
+			}
 			this._locked = true;
 		}
 		return disabled;
@@ -91,7 +103,9 @@ export class BonusPool extends Pool {
 	enable(dice: HTMLDice) {
 		let enabled = super.enable(dice);
 		if (enabled) {
-			this._used--;
+			if (!this.isUnlimited) {
+				this._used--;
+			}
 			this.unlock();
 		}
 		return enabled;

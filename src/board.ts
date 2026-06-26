@@ -127,6 +127,16 @@ export default class Board {
 		}).sort(compare);
 	}
 
+	isFull(): boolean {
+		// Check if all non-border cells have tiles
+		let emptyCount = 0;
+		this._cells.forEach(cell => {
+			if (!cell.border && !cell.tile) {
+				emptyCount++;
+			}
+		});
+		return emptyCount === 0;
+	}
 
 	_placeInitialTiles() {
 		const Tile = this._tileCtor;

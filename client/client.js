@@ -1034,6 +1034,16 @@ class Board {
             return clone.fitsNeighbors(neighborEdges);
         }).sort(compare);
     }
+    isFull() {
+        // Check if all non-border cells have tiles
+        let emptyCount = 0;
+        this._cells.forEach(cell => {
+            if (!cell.border && !cell.tile) {
+                emptyCount++;
+            }
+        });
+        return emptyCount === 0;
+    }
     _placeInitialTiles() {
         const Tile = this._tileCtor;
         this._cells.forEach(cell => {
@@ -1901,8 +1911,10 @@ const ROUNDS = {
     "lake": 6,
     "river": 6,
     "forest": 7,
-    "demo": 1
+    "demo": 1,
+    "sandbox": 999
 };
+const UNLIMITED_BONUS = ["sandbox"];
 function randomType(types) {
     return types[Math.floor(Math.random() * types.length)];
 }
@@ -1910,6 +1922,13 @@ function createDice(Ctor, type, round) {
     switch (type) {
         case "demo":
             return DEMO.map(type => new Ctor("plain", type));
+        case "sandbox":
+            return [
+                new Ctor("plain", randomType(DICE_REGULAR_1)),
+                new Ctor("plain", randomType(DICE_REGULAR_1)),
+                new Ctor("plain", randomType(DICE_REGULAR_1)),
+                new Ctor("plain", randomType(DICE_REGULAR_2)),
+            ];
         case "lake":
             return [
                 ...createDice(Ctor, "normal", round),
@@ -2051,14 +2070,21 @@ class BonusPool extends Pool {
         super("Special Routes");
         this._used = 0;
         this._locked = false;
+        this._gameType = null;
         this.node.classList.add("bonus");
         ["cross-road-road-rail-road", "cross-road-rail-rail-rail", "cross-road",
             "cross-rail", "cross-road-rail-rail-road", "cross-road-rail-road-rail"].forEach(sid => {
             this.add(new HTMLDice("plain", sid));
         });
     }
+    setGameType(type) {
+        this._gameType = type;
+    }
+    get isUnlimited() {
+        return this._gameType ? UNLIMITED_BONUS.includes(this._gameType) : false;
+    }
     handleEvent(e) {
-        if (this._locked || this._used == MAX_BONUSES) {
+        if (this._locked || (!this.isUnlimited && this._used == MAX_BONUSES)) {
             return;
         }
         super.handleEvent(e);
@@ -2066,7 +2092,9 @@ class BonusPool extends Pool {
     disable(dice) {
         let disabled = super.disable(dice);
         if (disabled) { // only if disabled, i.e. the tile was ours
-            this._used++;
+            if (!this.isUnlimited) {
+                this._used++;
+            }
             this._locked = true;
         }
         return disabled;
@@ -2074,7 +2102,9 @@ class BonusPool extends Pool {
     enable(dice) {
         let enabled = super.enable(dice);
         if (enabled) {
-            this._used--;
+            if (!this.isUnlimited) {
+                this._used--;
+            }
             this.unlock();
         }
         return enabled;
@@ -2367,6 +2397,7 @@ class SingleGame extends Game {
     constructor(_board, _type) {
         super(_board);
         this._type = _type;
+        this._bonusPool.setGameType(_type);
     }
     async play() {
         super.play();
@@ -2379,6 +2410,10 @@ class SingleGame extends Game {
             let dice = createDice(HTMLDice, this._type, num);
             await round.play(dice);
             round.node.remove();
+            // Check if all tiles are filled (for sandbox mode)
+            if (this._type === "sandbox" && this._board.isFull()) {
+                break;
+            }
             num++;
         }
         this._outro();
@@ -2815,6 +2850,7 @@ function init() {
     onClick("start-lake", () => goGame("lake"));
     onClick("start-river", () => goGame("river"));
     onClick("start-forest", () => goGame("forest"));
+    onClick("start-sandbox", () => goGame("sandbox"));
     onClick("start-multi", () => goGame("multi"));
     onClick("again", () => goIntro());
     onClick("download", () => download());

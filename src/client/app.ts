@@ -41,6 +41,7 @@ function init() {
 	onClick("start-lake", () => goGame("lake"));
 	onClick("start-river", () => goGame("river"));
 	onClick("start-forest", () => goGame("forest"));
+	onClick("start-sandbox", () => goGame("sandbox"));
 	onClick("start-multi", () => goGame("multi"));
 	onClick("again", () => goIntro());
 	onClick("download", () => download());

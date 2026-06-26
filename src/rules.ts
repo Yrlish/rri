@@ -5,15 +5,18 @@ interface Type<T> {
 	new(type: DiceType, sid: string): T;
 }
 
-export type GameType = "normal" | "lake" | "river" | "forest" | "demo";
+export type GameType = "normal" | "lake" | "river" | "forest" | "demo" | "sandbox";
 
 export const ROUNDS: {[type in GameType]: number} = {
 	"normal": 7,
 	"lake": 6,
 	"river": 6,
 	"forest": 7,
-	"demo": 1
+	"demo": 1,
+	"sandbox": 999
 }
+
+export const UNLIMITED_BONUS: GameType[] = ["sandbox"];
 
 function randomType(types: string[]) {
 	return types[Math.floor(Math.random() * types.length)];
@@ -23,6 +26,15 @@ export function createDice<T extends Dice>(Ctor: Type<T>, type: GameType, round:
 	switch (type) {
 		case "demo":
 			return DEMO.map(type => new Ctor("plain", type));
+		break;
+
+		case "sandbox":
+			return [
+				new Ctor("plain", randomType(DICE_REGULAR_1)),
+				new Ctor("plain", randomType(DICE_REGULAR_1)),
+				new Ctor("plain", randomType(DICE_REGULAR_1)),
+				new Ctor("plain", randomType(DICE_REGULAR_2)),
+			];
 		break;
 
 		case "lake":

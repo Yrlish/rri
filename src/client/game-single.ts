@@ -10,6 +10,7 @@ import * as scoreTable from "./score-table.js";
 export default class SingleGame extends Game {
 	constructor(_board:Board, readonly _type: GameType) {
 		super(_board);
+		this._bonusPool.setGameType(_type);
 	}
 
 	async play() {
@@ -24,6 +25,12 @@ export default class SingleGame extends Game {
 			let dice = createDice(HTMLDice, this._type, num);
 			await round.play(dice);
 			round.node.remove();
+			
+			// Check if all tiles are filled (for sandbox mode)
+			if (this._type === "sandbox" && this._board.isFull()) {
+				break;
+			}
+			
 			num++;
 		}
 
